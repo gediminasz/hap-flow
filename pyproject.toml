@@ -1,0 +1,19 @@
+[project]
+name = "hap-flow"
+version = "0.0.0"
+description = "Workflow system based on hapless"
+readme = "README.md"
+authors = [
+    { name = "Gediminas Zlatkus", email = "gediminas.zlatkus@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "hapless",
+]
+
+[project.scripts]
+hap-flow = "hap_flow:main"
+
+[build-system]
+requires = ["uv_build>=0.9.18,<0.10.0"]
+build-backend = "uv_build"
