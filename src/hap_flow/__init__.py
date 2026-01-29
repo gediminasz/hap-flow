@@ -37,9 +37,12 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
                 continue
 
         click.echo(f"Executing task: {task.name}")
+        # Inherit existing environment and add HAP_FLOW_PROJECT_DIR
+        task_env = os.environ.copy()
+        task_env["HAP_FLOW_PROJECT_DIR"] = str(project_dir)
         hapless.run_command(
             cmd=str(task.absolute()),
-            env={"HAP_FLOW_PROJECT_DIR": str(project_dir)},
+            env=task_env,
             workdir=workdir.absolute(),
             name=task_name,
             redirect_stderr=True,
