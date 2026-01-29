@@ -25,6 +25,9 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
 
     hapless = Hapless(hapless_dir=workspace / ".hapless")
 
+    # Get the project directory (current working directory where hap-flow was invoked)
+    project_dir = Path.cwd().absolute()
+
     for task in tasks:
         task_name = f"hf-{workflow.name}-{run_id}-{task.name}"
 
@@ -36,6 +39,7 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
         click.echo(f"Executing task: {task.name}")
         hapless.run_command(
             cmd=str(task.absolute()),
+            env={"HAP_FLOW_PROJECT_DIR": str(project_dir)},
             workdir=workdir.absolute(),
             name=task_name,
             redirect_stderr=True,
