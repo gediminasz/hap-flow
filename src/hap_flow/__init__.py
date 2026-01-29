@@ -18,11 +18,13 @@ def run(workflow: Path):
 
     hapless = Hapless(hapless_dir=workspace_dir / ".hapless")
 
-    run_id = 0
-    workflow_name = f"hf-{workflow.name}-{run_id}"
+    existing_runs = [int(d.name) for d in (workspace_dir / workflow.name).iterdir() if d.is_dir() and d.name.isdigit()]
+    new_run_id = max(existing_runs, default=0) + 1
+
+    workflow_name = f"hf-{workflow.name}-{new_run_id}"
 
     hap = hapless.create_hap(
-        cmd=f"hap-flow execute-workflow {workspace_dir} {workflow} {run_id}",
+        cmd=f"hap-flow execute-workflow {workspace_dir} {workflow} {new_run_id}",
         name=workflow_name,
         redirect_stderr=True,
     )
