@@ -19,7 +19,11 @@ def run(workflow: Path):
 
     hapless = Hapless(hapless_dir=workspace_dir / ".hapless")
 
-    existing_runs = [int(d.name) for d in (workspace_dir / workflow.name).iterdir() if d.is_dir() and d.name.isdigit()]
+    existing_runs = (
+        [int(d.name) for d in (workspace_dir / workflow.name).iterdir() if d.is_dir() and d.name.isdigit()]
+        if (workspace_dir / workflow.name).exists()
+        else []
+    )
     new_run_id = max(existing_runs, default=0) + 1
 
     workflow_name = f"hf-{workflow.name}-{new_run_id}"
