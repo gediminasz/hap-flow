@@ -3,6 +3,7 @@ from pathlib import Path
 
 import click
 from hapless import Hapless, Status
+from hapless.formatters import TableFormatter
 
 
 @click.group()
@@ -29,9 +30,8 @@ def run(workflow: Path):
         redirect_stderr=True,
     )
 
-    click.echo(f"Executing workflow: {workflow.name} [ hap: {hap} ]")
-    hapless.run_hap(hap, blocking=True)
-
+    hapless.run_hap(hap, check=True)
+    hapless.show(hap, formatter=TableFormatter())
     hapless.logs(hap, follow=True)
 
 
