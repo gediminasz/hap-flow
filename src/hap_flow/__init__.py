@@ -11,10 +11,35 @@ def main():
 
 
 @main.command()
+@click.argument("workflow", type=click.Path(path_type=Path))
+def run(workflow: Path):
+    project_dir = Path.cwd().absolute()
+    workspace_dir = project_dir / "workspace"
+
+    hapless = Hapless(hapless_dir=workspace_dir / ".hapless")
+
+    run_id = 0
+    workflow_name = f"hf-{workflow.name}-{run_id}"
+
+    hap = hapless.create_hap(
+        cmd=f"hap-flow execute-workflow {workspace_dir} {workflow} {run_id}",
+        name=workflow_name,
+        redirect_stderr=True,
+    )
+
+    click.echo(f"Executing workflow: {workflow.name} [ hap: {hap} ]")
+    hapless.run_hap(hap, blocking=True)
+
+    hapless.logs(hap, follow=True)
+
+
+@main.command()
 @click.argument("workspace", type=click.Path(path_type=Path))
 @click.argument("workflow", type=click.Path(path_type=Path))
 @click.argument("run_id")
 def execute_workflow(workspace: Path, workflow: Path, run_id: str):
+    click.echo("Starting workflow")
+
     workdir = workspace / workflow.name / run_id
     workdir.mkdir(parents=True, exist_ok=True)
 
@@ -54,3 +79,5 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
 
         if hap.status == Status.SUCCESS:
             click.echo(f"Task finished: {task.name} [ hap: {hap} ]")
+
+    click.echo("Workflow finished")
