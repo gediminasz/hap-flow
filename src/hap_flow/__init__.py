@@ -33,14 +33,15 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
                 click.echo(f"Skipping task {task.name} [ hap: {hap} ]")
                 continue
 
-        click.echo(f"Executing task: {task.name}")
-        hapless.run_command(
+        hap = hapless.create_hap(
             cmd=str(task.absolute()),
             workdir=workdir.absolute(),
             name=task_name,
             redirect_stderr=True,
-            blocking=True,
         )
+
+        click.echo(f"Executing task: {task.name} [ hap: {hap} ]")
+        hapless.run_hap(hap, blocking=True)
 
         hap = hapless.get_hap(task_name)
         assert hap is not None
