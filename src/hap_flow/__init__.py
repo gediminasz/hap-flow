@@ -22,16 +22,22 @@ def run(workflow: Path):
         if (workspace_dir / workflow.name).exists()
         else []
     )
-    new_run_id = max(existing_runs, default=0) + 1
+    run_id = str(max(existing_runs, default=0) + 1)
 
-    workflow_name = f"hf-w-{workflow.name}-{new_run_id}"
+    workflow_name = f"hf-w-{workflow.name}-{run_id}"
 
     hapless = Hapless()
 
     hap = hapless.create_hap(
-        cmd=f"hap-flow execute-workflow {workspace_dir} {workflow} {new_run_id}",
+        cmd=f"hap-flow execute-workflow {workspace_dir} {workflow}",
         name=workflow_name,
         redirect_stderr=True,
+        workdir=workspace_dir / workflow.name / run_id,
+        env={
+            **os.environ,
+            "HF_PROJECT_DIR": str(project_dir),
+            "HF_RUN_ID": run_id,
+        },
     )
 
     hapless.run_hap(hap, check=True)
@@ -42,10 +48,10 @@ def run(workflow: Path):
 @main.command()
 @click.argument("workspace", type=click.Path(path_type=Path))
 @click.argument("workflow", type=click.Path(path_type=Path))
-@click.argument("run_id")
-def execute_workflow(workspace: Path, workflow: Path, run_id: str):
+def execute_workflow(workspace: Path, workflow: Path):
     click.echo("Starting workflow")
 
+    run_id = os.environ["HF_RUN_ID"]
     workdir = workspace / workflow.name / run_id
     workdir.mkdir(parents=True, exist_ok=True)
     _link_latest(workdir)
