@@ -48,6 +48,7 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
 
     workdir = workspace / workflow.name / run_id
     workdir.mkdir(parents=True, exist_ok=True)
+    _link_latest(workdir)
 
     if workflow.is_dir():
         tasks = [f for f in workflow.iterdir() if f.is_file() and os.access(f, os.X_OK)]
@@ -87,3 +88,13 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
             click.echo(f"Task finished: {task.name} [ hap: {hap} ]")
 
     click.echo("Workflow finished")
+
+
+def _link_latest(workdir: Path):
+    latest = workdir.parent / "latest"
+
+    if latest.exists() and not latest.is_symlink():
+        return
+
+    latest.unlink(missing_ok=True)
+    latest.symlink_to(workdir, target_is_directory=True)

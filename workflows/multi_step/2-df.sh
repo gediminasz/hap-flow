@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-df -h .
+df -h . | tee -a out.txt
