@@ -26,7 +26,7 @@ def run(workflow: Path):
     )
     new_run_id = max(existing_runs, default=0) + 1
 
-    workflow_name = f"hf-{workflow.name}-{new_run_id}"
+    workflow_name = f"hf-w-{workflow.name}-{new_run_id}"
 
     hap = hapless.create_hap(
         cmd=f"hap-flow execute-workflow {workspace_dir} {workflow} {new_run_id}",
@@ -57,7 +57,7 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
     hapless = Hapless(hapless_dir=workspace / ".hapless")
 
     for task in tasks:
-        task_name = f"hf-{workflow.name}-{run_id}-{task.name}"
+        task_name = f"hf-t-{workflow.name}-{run_id}-{task.name}"
 
         if hap := hapless.get_hap(task_name):
             if hap.status == Status.SUCCESS:
