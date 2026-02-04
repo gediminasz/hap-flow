@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 
 import click
@@ -24,37 +25,39 @@ def run(workflow: Path):
     )
     run_id = str(max(existing_runs, default=0) + 1)
 
+    workdir = workspace_dir / workflow.name / run_id
+    workdir.mkdir(parents=True, exist_ok=True)
+    _link_latest(workdir)
+
     workflow_name = f"hf-w-{workflow.name}-{run_id}"
 
     hapless = Hapless()
 
     hap = hapless.create_hap(
-        cmd=f"hap-flow execute-workflow {workspace_dir} {workflow}",
+        cmd=f"hap-flow workflow {workflow.absolute()}",
         name=workflow_name,
         redirect_stderr=True,
-        workdir=workspace_dir / workflow.name / run_id,
+        workdir=workdir,
         env={
             **os.environ,
             "HF_PROJECT_DIR": str(project_dir),
             "HF_RUN_ID": run_id,
+            "HF_WORKFLOW_NAME": workflow_name,
         },
     )
 
     hapless.run_hap(hap, check=True)
     hapless.show(hap, formatter=TableFormatter())
-    hapless.logs(hap, follow=True)
+    subprocess.run(["tail", "-f", "+1", hap.stderr_path])
 
 
 @main.command()
-@click.argument("workspace", type=click.Path(path_type=Path))
 @click.argument("workflow", type=click.Path(path_type=Path))
-def execute_workflow(workspace: Path, workflow: Path):
-    click.echo("Starting workflow")
-
+def workflow(workflow: Path):
     run_id = os.environ["HF_RUN_ID"]
-    workdir = workspace / workflow.name / run_id
-    workdir.mkdir(parents=True, exist_ok=True)
-    _link_latest(workdir)
+    workflow_name = os.environ["HF_WORKFLOW_NAME"]
+
+    click.echo(f"Starting workflow: {workflow.name} ({workflow_name})")
 
     if workflow.is_dir():
         tasks = [f for f in workflow.iterdir() if f.is_file() and os.access(f, os.X_OK)]
@@ -73,7 +76,6 @@ def execute_workflow(workspace: Path, workflow: Path):
 
         hap = hapless.create_hap(
             cmd=str(task.absolute()),
-            workdir=workdir.absolute(),
             name=task_name,
             redirect_stderr=True,
         )
