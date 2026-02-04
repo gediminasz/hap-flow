@@ -17,8 +17,6 @@ def run(workflow: Path):
     project_dir = Path.cwd().absolute()
     workspace_dir = project_dir / "workspace"
 
-    hapless = Hapless(hapless_dir=workspace_dir / ".hapless")
-
     existing_runs = (
         [int(d.name) for d in (workspace_dir / workflow.name).iterdir() if d.is_dir() and d.name.isdigit()]
         if (workspace_dir / workflow.name).exists()
@@ -27,6 +25,8 @@ def run(workflow: Path):
     new_run_id = max(existing_runs, default=0) + 1
 
     workflow_name = f"hf-w-{workflow.name}-{new_run_id}"
+
+    hapless = Hapless()
 
     hap = hapless.create_hap(
         cmd=f"hap-flow execute-workflow {workspace_dir} {workflow} {new_run_id}",
@@ -54,7 +54,7 @@ def execute_workflow(workspace: Path, workflow: Path, run_id: str):
     else:
         tasks = [workflow]
 
-    hapless = Hapless(hapless_dir=workspace / ".hapless")
+    hapless = Hapless()
 
     for task in tasks:
         task_name = f"hf-t-{workflow.name}-{run_id}-{task.name}"

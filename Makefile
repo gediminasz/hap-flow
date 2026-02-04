@@ -1,4 +1,3 @@
-export HAPLESS_DIR=./workspace/.hapless
 # export HAPLESS_DEBUG=1
 
 start:
