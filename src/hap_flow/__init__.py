@@ -5,6 +5,7 @@ from pathlib import Path
 import click
 from hapless import Hapless, Status
 from hapless.formatters import TableFormatter
+from rich.padding import Padding
 
 
 @click.group()
@@ -59,23 +60,23 @@ def run(workflow: Path, here: bool):
 @click.argument("workflow", type=click.Path(path_type=Path))
 def workflow(workflow: Path):
     run_id = os.environ["HF_RUN_ID"]
-    workflow_name = os.environ["HF_WORKFLOW_NAME"]
 
-    click.echo(f"Starting workflow: {workflow.name} ({workflow_name})")
+    hapless = Hapless()
+
+    hapless.ui.print()
+    hapless.ui.console.rule(rf"WORKFLOW \[{workflow.name}]", align="left", characters="*")
 
     if workflow.is_dir():
         tasks = [f for f in workflow.iterdir() if f.is_file() and os.access(f, os.X_OK)]
     else:
         tasks = [workflow]
 
-    hapless = Hapless()
-
-    for task in tasks:
+    for task in sorted(tasks):
         task_name = f"hf-t-{workflow.name}-{run_id}-{task.name}"
 
         if hap := hapless.get_hap(task_name):
             if hap.status == Status.SUCCESS:
-                click.echo(f"Skipping task {task.name} [ hap: {hap} ]")
+                click.echo(f"Skipping task {task.name}")
                 continue
 
         hap = hapless.create_hap(
@@ -84,7 +85,8 @@ def workflow(workflow: Path):
             redirect_stderr=True,
         )
 
-        click.echo(f"Executing task: {task.name} [ hap: {hap} ]")
+        hapless.ui.print()
+        hapless.ui.console.rule(rf"TASK \[{task.name}]", align="left", characters="*")
         hapless.run_hap(hap, blocking=True)
 
         hap = hapless.get_hap(task_name)
@@ -93,11 +95,8 @@ def workflow(workflow: Path):
         hapless.logs(hap)
 
         if hap.status != Status.SUCCESS:
-            click.echo(f"Task failed: {task.name} [ hap: {hap} ]")
+            hapless.ui.print(rf"TASK FAILED \[{task.name}]")
             return
-
-        if hap.status == Status.SUCCESS:
-            click.echo(f"Task finished: {task.name} [ hap: {hap} ]")
 
     click.echo("Workflow finished")
 
