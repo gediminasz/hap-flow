@@ -1,3 +1,3 @@
 # hap-flow
 
-Workflow system based on hapless
+Workflow system based on [hapless](https://github.com/bmwant/hapless).
