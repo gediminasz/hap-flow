@@ -53,7 +53,7 @@ def run(workflow: Path, here: bool):
 
     hapless.run_hap(hap, check=True)
     hapless.show(hap, formatter=TableFormatter())
-    subprocess.run(["tail", "-f", "+1", hap.stderr_path])
+    subprocess.run(["tail", "-n", "+1", "-f", str(hap.stderr_path)])
 
 
 @main.command()
