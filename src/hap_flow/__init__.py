@@ -19,12 +19,13 @@ def run(workflow: Path, here: bool):
     project_dir = Path.cwd().absolute()
     workspace_dir = project_dir / "workspace"
 
-    existing_runs = (
-        [int(d.name) for d in (workspace_dir / workflow.name).iterdir() if d.is_dir() and d.name.isdigit()]
-        if (workspace_dir / workflow.name).exists()
-        else []
-    )
-    run_id = str(max(existing_runs, default=0) + 1)
+    hapless = Hapless()
+
+    previous_runs = []
+    for hap in hapless.get_haps():
+        if hap.name.startswith(f"hf-w-{workflow.name}-") and hap.env and "HF_RUN_ID" in hap.env:
+            previous_runs.append(int(hap.env["HF_RUN_ID"]))
+    run_id = str(max(previous_runs, default=0) + 1)
 
     if here:
         workdir = project_dir
@@ -35,8 +36,6 @@ def run(workflow: Path, here: bool):
         workdir = run_dir
 
     workflow_name = f"hf-w-{workflow.name}-{run_id}"
-
-    hapless = Hapless()
 
     hap = hapless.create_hap(
         cmd=f"hap-flow workflow {workflow.absolute()}",
