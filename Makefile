@@ -3,8 +3,5 @@
 start:
 	uv run hap-flow run ./workflows/multi_step
 
-hap:
-	uv run hap
-
 clean:
 	rm -rv ./workspace

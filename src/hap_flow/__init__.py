@@ -14,7 +14,8 @@ def main():
 
 @main.command()
 @click.argument("workflow", type=click.Path(path_type=Path))
-def run(workflow: Path):
+@click.option("--here", is_flag=True)
+def run(workflow: Path, here: bool):
     project_dir = Path.cwd().absolute()
     workspace_dir = project_dir / "workspace"
 
@@ -25,9 +26,13 @@ def run(workflow: Path):
     )
     run_id = str(max(existing_runs, default=0) + 1)
 
-    workdir = workspace_dir / workflow.name / run_id
-    workdir.mkdir(parents=True, exist_ok=True)
-    _link_latest(workdir)
+    if here:
+        workdir = project_dir
+    else:
+        run_dir = workspace_dir / workflow.name / run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        _link_latest(run_dir)
+        workdir = run_dir
 
     workflow_name = f"hf-w-{workflow.name}-{run_id}"
 
