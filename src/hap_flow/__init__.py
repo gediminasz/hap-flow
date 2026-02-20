@@ -4,8 +4,6 @@ from pathlib import Path
 
 import click
 from hapless import Hapless, Status
-from hapless.formatters import TableFormatter
-from rich.padding import Padding
 
 
 @click.group()
