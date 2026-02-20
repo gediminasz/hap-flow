@@ -51,9 +51,9 @@ def run(workflow: Path, here: bool):
         },
     )
 
-    hapless.run_hap(hap, check=True)
-    hapless.show(hap, formatter=TableFormatter())
-    subprocess.run(["tail", "-n", "+1", "-f", str(hap.stderr_path)])
+    hapless.run_hap(hap)
+
+    subprocess.run(["tail", "-n", "+1", "-f", str(hap.stdout_path)])
 
 
 @main.command()
@@ -92,7 +92,8 @@ def workflow(workflow: Path):
         hap = hapless.get_hap(task_name)
         assert hap is not None
 
-        hapless.logs(hap)
+        logs = hap.stdout_path.read_text()
+        hapless.ui.print(logs)
 
         if hap.status != Status.SUCCESS:
             hapless.ui.print(rf"TASK FAILED \[{task.name}]")
