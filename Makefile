@@ -1,7 +1,5 @@
-# export HAPLESS_DEBUG=1
-
-start:
-	uv run hap-flow run ./workflows/multi_step
+run-multi-step:
+	uv run hap-flow run ./workflows/multi-step
 
 clean:
 	rm -rv ./workspace

@@ -1,9 +1,10 @@
 import os
 import subprocess
+import time
 from pathlib import Path
 
 import click
-from hapless import Hapless, Status
+from hapless import Hap, Hapless, Status
 
 
 @click.group()
@@ -36,7 +37,7 @@ def run(workflow: Path, here: bool):
 
     workflow_name = f"hf-w-{workflow.name}-{run_id}"
 
-    hap = hapless.create_hap(
+    workflow_hap = hapless.create_hap(
         cmd=f"hap-flow workflow {workflow.absolute()}",
         name=workflow_name,
         redirect_stderr=True,
@@ -49,9 +50,9 @@ def run(workflow: Path, here: bool):
         },
     )
 
-    hapless.run_hap(hap)
+    hapless.run_hap(workflow_hap)
 
-    subprocess.run(["tail", "-n", "+1", "-f", str(hap.stdout_path)])
+    _stream_hap_output(workflow_hap)
 
 
 @main.command()
@@ -77,7 +78,7 @@ def workflow(workflow: Path):
                 click.echo(f"Skipping task {task.name}")
                 continue
 
-        hap = hapless.create_hap(
+        task_hap = hapless.create_hap(
             cmd=str(task.absolute()),
             name=task_name,
             redirect_stderr=True,
@@ -85,19 +86,16 @@ def workflow(workflow: Path):
 
         hapless.ui.print()
         hapless.ui.console.rule(rf"TASK \[{task.name}]", align="left", characters="*")
-        hapless.run_hap(hap, blocking=True)
+        hapless.run_hap(task_hap)
 
-        hap = hapless.get_hap(task_name)
-        assert hap is not None
+        _stream_hap_output(task_hap)
 
-        logs = hap.stdout_path.read_text()
-        hapless.ui.print(logs)
-
-        if hap.status != Status.SUCCESS:
+        if task_hap.status != Status.SUCCESS:
             hapless.ui.print(rf"TASK FAILED \[{task.name}]")
             return
 
-    click.echo("Workflow finished")
+    hapless.ui.print()
+    hapless.ui.console.rule(rf"SUCCESS \[{workflow.name}]", align="left", characters="*")
 
 
 def _link_latest(workdir: Path):
@@ -108,3 +106,10 @@ def _link_latest(workdir: Path):
 
     latest.unlink(missing_ok=True)
     latest.symlink_to(workdir, target_is_directory=True)
+
+
+def _stream_hap_output(hap: Hap):
+    with subprocess.Popen(["tail", "-n", "+1", "-f", str(hap.stdout_path)]) as proc:
+        while hap.rc is None:
+            time.sleep(0.1)
+        proc.terminate()
